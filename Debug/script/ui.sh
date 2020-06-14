@@ -1,0 +1,2 @@
+cd ClientApp
+npm i
