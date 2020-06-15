@@ -3,42 +3,6 @@ using System.Collections.Generic;
 using System.Data.Common;
 
 namespace Debug.Controllers {
-    /// <summary>
-    ///   DB 連線方式
-    /// </summary>
-    public class IDbConnection {
-        /// <summary>
-        ///   DB 連線方式
-        /// </summary>
-        public DbConnection connection { get; set; }
-    }
-    /// <summary>
-    ///   DB sql 指令
-    /// </summary>
-    public class IDbCommand {
-        /// <summary>
-        ///   DB sql 指令
-        /// </summary>
-        public DbCommand command { get; set; }
-    }
-    /// <summary>
-    ///   DB 回傳 Data
-    /// </summary>
-    public class IDataReader {
-        /// <summary>
-        ///   DB 回傳 Data
-        /// </summary>
-        public List<Dictionary<string, object>> data { get; set; }
-    }
-    /// <summary>
-    ///   DB Data 轉成 json 格式
-    /// </summary>
-    public class IDbDataAdapter {
-        /// <summary>
-        ///   DB Data 轉成其他格式
-        /// </summary>
-        public List<Dictionary<string, object>> data { get; set; }
-    }
 
     /// <summary>
     ///   抽象 DataBase 物件
@@ -85,7 +49,7 @@ namespace Debug.Controllers {
                 }
                 count++;
             }
-            var adapter = new IDbDataAdapter ();
+            var adapter = new MyDBDataAdapter ();
             adapter.data = result;
             return adapter;
         }

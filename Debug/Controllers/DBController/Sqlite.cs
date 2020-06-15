@@ -7,13 +7,13 @@ public class SqliteDB : DBAbstractFactory {
         if (connstr == "" || connstr == null) return null;
         DbConnection conn = new SqliteConnection();
         conn.ConnectionString = connstr;
-        var DBConn = new IDbConnection ();
+        var DBConn = new MyDBConnection ();
         DBConn.connection = conn;
         return DBConn;
     }
     public override IDbCommand CreateCommand (IDbConnection con, string cmd) {
         DbCommand SqlCommand = new SqliteCommand  (cmd, (SqliteConnection) con.connection);
-        var DBCmd = new IDbCommand ();
+        var DBCmd = new MyDBCommand ();
         DBCmd.command = SqlCommand;
         return DBCmd;
     }
@@ -23,7 +23,7 @@ public class SqliteDB : DBAbstractFactory {
         DbCommand cmd = sqlCmd.command;
         DbDataReader data = cmd.ExecuteReader ();
 
-        var read = new IDataReader ();
+        var read = new MyDataReader ();
 
         read.data = this.CreateDataAdapter (data).data;
 
