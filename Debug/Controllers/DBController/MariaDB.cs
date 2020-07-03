@@ -1,33 +1,61 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
+using System.Linq;
+using System.Runtime.Serialization;
 using Debug.Controllers;
 using MySql.Data.MySqlClient;
 
-public class MariaDB : DBAbstractFactory {
-    public override IDbConnection CreateConnection (string connstr) {
-        if (connstr == "" || connstr == null) return null;
-        DbConnection conn = new MySqlConnection ();
-        conn.ConnectionString = connstr;
-        var DBConn = new MyDBConnection ();
-        DBConn.connection = conn;
-        return DBConn;
-    }
-    public override IDbCommand CreateCommand (IDbConnection con, string cmd) {
-        DbCommand SqlCommand = new MySqlCommand (cmd, (MySqlConnection) con.connection);
-        var DBCmd = new MyDBCommand ();
-        DBCmd.command = SqlCommand;
-        return DBCmd;
-    }
-    public override IDataReader CreateDataReader (IDbConnection con, IDbCommand sqlCmd) {
-        MySqlConnection conn = (MySqlConnection) con.connection;
-        if (conn.State != System.Data.ConnectionState.Open) conn.Open ();
-        DbCommand cmd = sqlCmd.command;
-        DbDataReader data = cmd.ExecuteReader ();
+class MySQLDBFactory: DBAbstractFactory,ISerializable
+    {
+        private string drivertype { get; set; }
+        public MySQLDBFactory() { this.drivertype = null; }
+        public override IDbConnection CreateConnection(string connstr)
+        {
+            if (connstr == null || connstr.Length == 0)
+            {
+                return null;
+            }
+            return new MySqlConnection(connstr);
+        }
+        public override IDbCommand CreateCommand(IDbConnection con, string cmd)
+        {
+            if (con == null || cmd == null || cmd.Length == 0)
+            {
+                return null;
+            }
+            if(con is MySqlConnection)
+            {
+                return new MySqlCommand(cmd, (MySqlConnection)con);
+            }
+            return null;
+        }
+        public override IDbDataAdapter CreateDbAdapter(IDbCommand cmd)
+        {
+            if(cmd == null) { return null; }
+            if(cmd is MySqlCommand)
+            {
+                return new MySqlDataAdapter((MySqlCommand)cmd);   
+            }
+            return null;
+        }
+        public override IDataReader CreateDataReader(IDbCommand cmd)
+        {
+            if (cmd == null) { return null; }
+            if(cmd is MySqlCommand)
+            {
+                return (MySqlDataReader)cmd.ExecuteReader();
+            }
+            return null;
+        }
 
-        var read = new MyDataReader ();
-
-        read.data = this.CreateDataAdapter (data).data;
-
-        conn.Close ();
-        return read;
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            throw new NotImplementedException();
+        }
+        protected MySQLDBFactory(SerializationInfo info, StreamingContext context)
+        {
+            throw new NotImplementedException();
+        }
     }
-}

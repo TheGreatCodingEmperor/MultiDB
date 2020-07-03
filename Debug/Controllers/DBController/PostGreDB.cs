@@ -1,37 +1,59 @@
+using System;
+using System.Data;
 using System.Data.Common;
+using System.Runtime.Serialization;
 using Debug.Controllers;
 using Npgsql;
 
-public class PostGre : DBAbstractFactory
+class PostGreDBFactory: DBAbstractFactory,ISerializable
     {
+        private string drivertype { get; set; }
+        public PostGreDBFactory() { this.drivertype = null; }
         public override IDbConnection CreateConnection(string connstr)
         {
-            if (connstr == "" || connstr == null) return null;
-            DbConnection  conn = new NpgsqlConnection();
-            conn.ConnectionString = connstr;
-            var DBConn = new MyDBConnection();
-            DBConn.connection = conn;
-            return DBConn;
+            if (connstr == null || connstr.Length == 0)
+            {
+                return null;
+            }
+            return new NpgsqlConnection(connstr);
         }
         public override IDbCommand CreateCommand(IDbConnection con, string cmd)
         {
-            DbCommand SqlCommand = new NpgsqlCommand(cmd, (NpgsqlConnection)con.connection);
-            var DBCmd = new MyDBCommand();
-            DBCmd.command = SqlCommand;
-            return DBCmd;
+            if (con == null || cmd == null || cmd.Length == 0)
+            {
+                return null;
+            }
+            if(con is NpgsqlConnection)
+            {
+                return new NpgsqlCommand(cmd, (NpgsqlConnection)con);
+            }
+            return null;
         }
-        public override IDataReader CreateDataReader(IDbConnection con, IDbCommand sqlCmd)
+        public override IDbDataAdapter CreateDbAdapter(IDbCommand cmd)
         {
-            DbConnection conn = (NpgsqlConnection)con.connection;
-            if (conn.State != System.Data.ConnectionState.Open) conn.Open();
-            DbCommand cmd = sqlCmd.command;
-            DbDataReader data = cmd.ExecuteReader();
+            if(cmd == null) { return null; }
+            if(cmd is NpgsqlCommand)
+            {
+                return new NpgsqlDataAdapter((NpgsqlCommand)cmd);   
+            }
+            return null;
+        }
+        public override IDataReader CreateDataReader(IDbCommand cmd)
+        {
+            if (cmd == null) { return null; }
+            if(cmd is NpgsqlCommand)
+            {
+                return (NpgsqlDataReader)cmd.ExecuteReader();
+            }
+            return null;
+        }
 
-            var read = new MyDataReader();
-
-            read.data = this.CreateDataAdapter(data).data;
-
-            conn.Close();
-            return read;
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            throw new NotImplementedException();
+        }
+        protected PostGreDBFactory(SerializationInfo info, StreamingContext context)
+        {
+            throw new NotImplementedException();
         }
     }

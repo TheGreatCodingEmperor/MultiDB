@@ -1,21 +1,22 @@
+using System;
 using System.Data;
 using System.Data.Common;
-using Debug.Controllers;
-using System.Data.SQLite;
 using System.Runtime.Serialization;
-using System;
+using Debug.Controllers;
+using Microsoft.Data.SqlClient;
 
-class SqliteDBFactory : DBAbstractFactory,ISerializable
+[Serializable()]
+    class SQLServerDbFactory: DBAbstractFactory,ISerializable
     {
         private string drivertype { get; set; }
-        public SqliteDBFactory() { this.drivertype = null; }
+        public SQLServerDbFactory() { this.drivertype = null; }
         public override IDbConnection CreateConnection(string connstr)
         {
             if (connstr == null || connstr.Length == 0)
             {
                 return null;
             }
-            return new SQLiteConnection(connstr);
+            return new SqlConnection(connstr);
         }
         public override IDbCommand CreateCommand(IDbConnection con, string cmd)
         {
@@ -23,27 +24,27 @@ class SqliteDBFactory : DBAbstractFactory,ISerializable
             {
                 return null;
             }
-            if(con is SQLiteConnection)
+            if(con is SqlConnection)
             {
-                return new SQLiteCommand(cmd, (SQLiteConnection)con);
+                return new SqlCommand(cmd, (SqlConnection)con);
             }
             return null;
         }
         public override IDbDataAdapter CreateDbAdapter(IDbCommand cmd)
         {
             if(cmd == null) { return null; }
-            if(cmd is SQLiteCommand)
+            if(cmd is SqlCommand)
             {
-                return new SQLiteDataAdapter((SQLiteCommand)cmd);   
+                return new SqlDataAdapter((SqlCommand)cmd);   
             }
             return null;
         }
         public override IDataReader CreateDataReader(IDbCommand cmd)
         {
             if (cmd == null) { return null; }
-            if(cmd is SQLiteCommand)
+            if(cmd is SqlCommand)
             {
-                return (SQLiteDataReader)cmd.ExecuteReader();
+                return (SqlDataReader)cmd.ExecuteReader();
             }
             return null;
         }
@@ -52,7 +53,7 @@ class SqliteDBFactory : DBAbstractFactory,ISerializable
         {
             throw new NotImplementedException();
         }
-        protected SqliteDBFactory(SerializationInfo info, StreamingContext context)
+        protected SQLServerDbFactory(SerializationInfo info, StreamingContext context)
         {
             throw new NotImplementedException();
         }

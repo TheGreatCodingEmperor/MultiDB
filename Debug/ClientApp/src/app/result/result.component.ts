@@ -17,6 +17,7 @@ export class ResultComponent implements OnInit {
   /** 選擇的DB */
   @Input() DB:string;
   @Input() cols:Column[];
+  @Input() connString:string;
   @ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
   /**
    * @summary 頁面顯示清單(<table mat-table>)欄位
@@ -58,7 +59,7 @@ export class ResultComponent implements OnInit {
     /** 去 api 函式庫執行 sql 查詢 */
     let col = this.col?this.col:null;
     let keyword = this.keyword?this.keyword:null;
-    this.apiService.getTableData(this.sql, this.DB, col,keyword).subscribe(
+    this.apiService.getTableData(this.connString, this.sql, this.DB, col,keyword).subscribe(
       res => {
         /** 回傳資料錯誤 */
         if (!res) {

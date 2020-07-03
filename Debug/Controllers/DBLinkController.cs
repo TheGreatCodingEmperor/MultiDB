@@ -1,19 +1,20 @@
+using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace Debug.Controllers {
     [ApiController]
     [Route ("[controller]")]
     public class DBLinkController : ControllerBase {
         private readonly ILogger<DBLinkController> _logger;
-        private readonly MariaDB _mariaDB = new MariaDB ();
-        private readonly PostGre _postGre = new PostGre ();
-        private readonly SqliteDB _sqliteDB = new SqliteDB ();
         private IConfiguration _config;
         public DBLinkController (ILogger<DBLinkController> logger, IConfiguration config) {
             _config = config;
@@ -29,85 +30,92 @@ namespace Debug.Controllers {
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="type">maria、sqlite、postgre</param>
+        /// <param name="type">maria、sqlite、postgre、oracle、sqlserver</param>
         /// <param name="connectString">DB 連線方式</param>
         /// <param name="sql">sql 語法</param>
         /// <returns></returns>
         [HttpGet ("{type}")]
         public async Task<IActionResult> dblink (string type, [FromHeader] string connectString, [FromQuery] string sql) {
             DBAbstractFactory factory;
-            switch(type.ToLower()){
-                case "maria":{
-                    factory = new MariaDB();
-                    break;
-                }
-                case "sqlite":{
-                    factory = new SqliteDB();
-                    break;
-                }
-                case "postgre":{
-                    factory = new PostGre();
-                    break;
-                }
-                default: {
-                    factory = null;
-                    break;
-                }
+            switch (type.ToLower ()) {
+                case "maria":
+                    {
+                        factory = new MySQLDBFactory ();
+                        break;
+                    }
+                case "sqlite":
+                    {
+                        factory = new SqliteDBFactory ();
+                        break;
+                    }
+                case "postgre":
+                    {
+                        factory = new PostGreDBFactory ();
+                        break;
+                    }
+                case "oracle":
+                    {
+                        factory = new OracleDBFactory ();
+                        break;
+                    }
+                case "sqlserver":
+                    {
+                        factory = new SQLServerDbFactory ();
+                        break;
+                    }
+                default:
+                    {
+                        factory = null;
+                        break;
+                    }
             }
-            var data = getdatas(factory, WebUtility.UrlDecode(connectString) ,sql);
-            await Task.CompletedTask;
-            return Ok(data);
-        }
-        static List<Dictionary<string, object>> getdatas(DBAbstractFactory factory, string connectString, string sql){
-            var conn = factory.CreateConnection (connectString);
-            var cmd = factory.CreateCommand (conn, sql);
-            var data = factory.CreateDataReader (conn, cmd).data;
-            return data;
-        }
-
-        /// <summary>
-        /// maria db ����
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet ("mariadb")]
-        public async Task<IActionResult> Mariadb ([FromQuery] string sql, [FromQuery] string col = null, [FromQuery] string keyword = null) {
-            var connectString = _config["ConnectionStrings:mariaDB"];
-            if (col != null && keyword != null) {
-                sql = sql + $" where {col} = '{keyword}' or {col} LIKE '%{keyword}%'";
-            }
-            var conn = _mariaDB.CreateConnection (connectString);
-            var cmd = _mariaDB.CreateCommand (conn, sql);
-            var data = _mariaDB.CreateDataReader (conn, cmd).data;
+            var data = getdatas (factory, WebUtility.UrlDecode (connectString), sql);
             await Task.CompletedTask;
             return Ok (data);
         }
+        static string getdatas (DBAbstractFactory factory, string connectString, string sql) {
+            var db = factory;
+            var connect = db.CreateConnection (connectString);
+            try {
+                connect.Open ();
+                var cmd = db.CreateCommand ((DbConnection) connect, sql);
+                var reader = db.CreateDataReader ((DbCommand) cmd);
 
-        [HttpGet ("postgredb")]
-        public async Task<IActionResult> PostGreDB ([FromQuery] string sql, [FromQuery] string col = null, [FromQuery] string keyword = null) {
-            var connectString = _config["ConnectionStrings:postGresDB"];
-            if (col != null && keyword != null) {
-                sql = sql + $" where {col} = '{keyword}' or {col} LIKE '%{keyword}%'";
+                //MySqlDataAdapter adapter = (MySqlDataAdapter)maria.CreateDbAdapter(cmd);
+                DataTable ds = new DataTable ();
+
+                var columns = new List<string> ();
+                foreach (DataColumn column in ds.Columns) {
+                    columns.Add (column.ColumnName);
+                }
+
+                //adapter.Fill(ds);
+                ds.Load (reader);
+
+                var rows = ds.AsEnumerable ()
+                    // .Where (i => (dynamic) (i["id"]) == 2)
+                    // .Where(i => ColValue(i,"image_no") == 34)
+
+                    #region 【json】
+                    .Select (r => r.Table.Columns.Cast<DataColumn> ()
+                        .Select (c => new KeyValuePair<string, object> (c.ColumnName, r[c.Ordinal])).ToDictionary (z => z.Key, z => z.Value)
+                    ).ToList ();
+                #endregion【json】
+
+                #region 【data list】
+                // .Select(i => i.ItemArray).ToList();
+                #endregion 【data list】
+
+                // Console.WriteLine (JsonConvert.SerializeObject (rows));
+                connect.Close ();
+                return JsonConvert.SerializeObject (rows);
+
+                // Console.WriteLine(JsonConvert.SerializeObject(rows));
+            } catch (Exception e) {
+                // Console.WriteLine (e.ToString ());
+                connect.Close ();
+                return e.ToString ();
             }
-            var conn = _postGre.CreateConnection (connectString);
-            var cmd = _postGre.CreateCommand (conn, sql);
-            var data = _postGre.CreateDataReader (conn, cmd).data;
-            await Task.CompletedTask;
-
-            return Ok (data);
-        }
-
-        [HttpGet ("sqlitedb")]
-        public async Task<IActionResult> SqliteDB ([FromQuery] string sql, [FromQuery] string col = null, [FromQuery] string keyword = null) {
-            var connectString = _config["ConnectionStrings:sqlLiteDB"];
-            if (col != null && keyword != null) {
-                sql = sql + $" where {col} = '{keyword}' or {col} LIKE '%{keyword}%'";
-            }
-            var conn = _sqliteDB.CreateConnection (connectString);
-            var cmd = _sqliteDB.CreateCommand (conn, sql);
-            var data = _sqliteDB.CreateDataReader (conn, cmd).data;
-            await Task.CompletedTask;
-
-            return Ok (data);
         }
     }
 }

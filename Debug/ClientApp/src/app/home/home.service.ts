@@ -22,19 +22,19 @@ export class ApiTemplateService {
     'Access-Control-Allow-Origin': '*'
   });
 
-  getData(sql: string, db: string) {
+  getData(sql: string, db: string, connString:string) {
     console.log(sql);
     console.log(db);
-    return this.http.get<any>(`${this.serverUrl}${db}/?sql=${sql}`, { headers: this.corsHeaders }).pipe(
+    return this.http.get<any>(`${this.serverUrl}${db}/?sql=${sql}`, { headers: {connectString:connString} }).pipe(
       catchError(this.handleError<any[]>('getDBData', []))
     );
   }
 
-  getTableData(sql: string, db: string, col?:string, keyword?:string) {
+  getTableData(connString:string, sql: string, db: string, col?:string, keyword?:string) {
     console.log(col);
     console.log(keyword);
     let cmd = (keyword && keyword!='')?`&col=${col}&keyword=${keyword}`:'';
-    return this.http.get<any>(`${this.serverUrl}${db}/?sql=${sql}`+cmd, { headers: this.corsHeaders }).pipe(
+    return this.http.get<any>(`${this.serverUrl}${db}/?sql=${sql}`+cmd, { headers: {connectString:connString} }).pipe(
       catchError(this.handleError<any[]>('getDBData', []))
     );
   }

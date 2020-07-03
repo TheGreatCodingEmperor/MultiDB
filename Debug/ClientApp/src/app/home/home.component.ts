@@ -9,7 +9,7 @@ import { MatPaginator } from '@angular/material';
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  @ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
+  @ViewChild( MatPaginator, { static: true }) homePaginator: MatPaginator;
   /**
    * @summary 頁面顯示清單(<table mat-table>)欄位
    * @DBTag 換成 API 取出來 資料 Tag 名稱
@@ -37,16 +37,19 @@ export class HomeComponent implements OnInit {
   dataSource = new MatTableDataSource<any>();
   /** DB 選項 */
   dbOptions = [
-    { value: 'mariadb', viewValue: 'mariaDB' },
-    { value: 'sqlitedb', viewValue: 'sqlLite' },
-    { value: 'postgredb', viewValue: 'postGresdb' }
+    { value: 'maria', viewValue: 'mariaDB' },
+    { value: 'sqlite', viewValue: 'sqlLite' },
+    { value: 'postgre', viewValue: 'postGresdb' },
+    { value: 'oracle', viewValue: 'oracle' },
+    { value: 'sqlserver', viewValue: 'sql server' }
   ];
   /** 選擇的DB */
-  DB = "mariadb";
+  DB = "maria";
   /** sql 語法 */
   sql = "";
   /** 是否顯示'查詢錯誤' */
   erroMessage = false;
+  connString="";
   mod = 'sql';
 
   constructor(
@@ -55,11 +58,11 @@ export class HomeComponent implements OnInit {
   ) { }
   /** 頁面初始 */
   ngOnInit() {
-    this.dataSource.paginator = this.paginator;
+    this.dataSource.paginator = this.homePaginator;
   }
   /** 根據使用者 sql、DB 查詢 */
   getDatas() {
-    this.apiService.getData(this.sql, this.DB).subscribe(
+    this.apiService.getData(this.sql, this.DB, this.connString).subscribe(
       res => {
         if (!res) {
           this.erroMessage = true;

@@ -4,6 +4,8 @@
   <option value="ui">table 內查詢</option>
 </select>
 <div *ngIf="mod == 'sql'">
+  connString
+  <input type="text" [(ngModel)]="connString"/>
   <table>
     <tr>
       <td>查詢工具</td>
@@ -50,7 +52,7 @@
       <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
     </table>
 
-    <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+    <mat-paginator id="home" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
   </div>
 </div>
-<app-result *ngIf="mod =='ui'" [sql]="sql" [DB]="DB" [cols]="cols" ></app-result>
+<app-result *ngIf="mod =='ui'" [sql]="sql" [DB]="DB" [cols]="cols" [connString]="connString"></app-result>
